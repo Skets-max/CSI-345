@@ -1,0 +1,549 @@
+{
+  "info": {
+    "name": "Student Club Portal – All Endpoints (Tasks 5 & 6)",
+    "description": "CSI345 Project – GET, POST, PATCH endpoints tested via Postman. Set baseUrl and token variables before running.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "token",   "value": "YOUR_JWT_TOKEN_HERE" },
+    { "key": "adminToken", "value": "YOUR_ADMIN_JWT_TOKEN_HERE" }
+  ],
+  "item": [
+    {
+      "name": "0. Health & Auth",
+      "item": [
+        {
+          "name": "GET /health – Server health check",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/health"
+          }
+        },
+        {
+          "name": "POST /auth/login – Login (get JWT token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  console.log('Token saved to collection variable');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"202204203\",\n  \"password\": \"SecurePass1\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /auth/dev-token – Quick dev token (no DB needed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('token', json.token);",
+                  "  console.log('Dev token saved:', json.role);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/dev-token",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"202204203\",\n  \"role\": \"student\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /auth/dev-token – Admin token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json.token) {",
+                  "  pm.collectionVariables.set('adminToken', json.token);",
+                  "  console.log('Admin token saved');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/auth/dev-token",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"ADMIN001\",\n  \"role\": \"admin\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Registration Service",
+      "item": [
+        {
+          "name": "GET /registrations/:id – Get registration status",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/registrations/202204203",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "POST /registrations – Register student",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/registrations",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentNumber\": \"202204203\",\n  \"firstName\": \"Marang\",\n  \"lastName\": \"Ponatshego\",\n  \"dateOfBirth\": \"2000-05-15\",\n  \"universityEmail\": \"202204203@student.university.ac.bw\",\n  \"password\": \"SecurePass1\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /registrations/:id/confirm-email – Verify email",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/registrations/202204203/confirm-email",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"YOUR_VERIFICATION_TOKEN\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /registrations/resend-verification – Resend email",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/registrations/resend-verification",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"universityEmail\": \"202204203@student.university.ac.bw\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Membership Service",
+      "item": [
+        {
+          "name": "GET /members – List all members (admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/members?status=active&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["members"],
+              "query": [
+                { "key": "status", "value": "active" },
+                { "key": "page",   "value": "1" },
+                { "key": "limit",  "value": "20" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "GET /members/:id – Get member profile",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/members/202204203",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "GET /members/:id/membership – Get membership details",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/members/202204203/membership",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "POST /memberships – Create membership after payment",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/memberships",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"202204203\",\n  \"paymentId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH /members/:id/block – Block member (admin)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/members/202204203/block",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "PATCH /members/:id/unblock – Unblock member (admin)",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/members/202204203/unblock",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "DELETE /members/:id – Delete member (admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/members/202204203",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Equipment Booking Service",
+      "item": [
+        {
+          "name": "GET /equipment – List all equipment (public)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/equipment?status=available",
+              "host": ["{{baseUrl}}"],
+              "path": ["equipment"],
+              "query": [{ "key": "status", "value": "available" }]
+            }
+          }
+        },
+        {
+          "name": "GET /equipment/:id – Get equipment details (public)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/equipment/1"
+          }
+        },
+        {
+          "name": "GET /bookings – List bookings (own for student / all for admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/bookings?status=confirmed&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"],
+              "query": [
+                { "key": "status", "value": "confirmed" },
+                { "key": "page",   "value": "1" },
+                { "key": "limit",  "value": "20" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "GET /bookings/:id – Get specific booking",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bookings/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "POST /bookings – Create a booking",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/bookings",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"202204203\",\n  \"equipmentId\": 1,\n  \"bookingDate\": \"2026-04-15\",\n  \"startTime\": \"10:00\",\n  \"endTime\": \"12:00\"\n}"
+            }
+          }
+        },
+        {
+          "name": "PATCH /bookings/:id/cancel – Cancel booking",
+          "request": {
+            "method": "PATCH",
+            "url": "{{baseUrl}}/bookings/1/cancel",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "DELETE /equipment/:id – Delete equipment (admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/equipment/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "DELETE /bookings/:id – Delete booking (admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/bookings/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Payment Service",
+      "item": [
+        {
+          "name": "GET /payments – List all payments (admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/payments?status=success&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["payments"],
+              "query": [
+                { "key": "status", "value": "success" },
+                { "key": "page",   "value": "1" },
+                { "key": "limit",  "value": "20" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "GET /payments/:id – Get payment by ID",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/payments/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "POST /payments – Initiate payment (Stripe Checkout)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/payments",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"202204203\",\n  \"paymentType\": \"new_membership\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /payments/webhooks/gateway – Stripe webhook",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/payments/webhooks/gateway",
+            "header": [
+              { "key": "Content-Type",    "value": "application/json" },
+              { "key": "stripe-signature", "value": "YOUR_STRIPE_SIGNATURE" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"type\": \"checkout.session.completed\", \"data\": { \"object\": { \"id\": \"cs_test_xxx\", \"payment_intent\": \"pi_test_xxx\", \"metadata\": { \"paymentId\": \"1\", \"studentId\": \"202204203\", \"paymentType\": \"new_membership\" } } } }"
+            }
+          }
+        },
+        {
+          "name": "DELETE /payments/:id – Delete payment (admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/payments/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Notification Service",
+      "item": [
+        {
+          "name": "GET /notifications – List notifications (admin)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/notifications?deliveryStatus=sent&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["notifications"],
+              "query": [
+                { "key": "deliveryStatus", "value": "sent" },
+                { "key": "page",  "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "GET /notifications/:id – Get notification details (admin)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/notifications/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "POST /notifications/send – Queue and send a notification (admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/notifications/send",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": \"202204203\",\n  \"notificationType\": \"membership_renewal_reminder\",\n  \"recipientEmail\": \"202204203@student.university.ac.bw\"\n}"
+            }
+          }
+        },
+        {
+          "name": "POST /notifications/:id/retry – Retry failed notification (admin)",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/notifications/1/retry",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Membership Card Service",
+      "item": [
+        {
+          "name": "GET /cards/:id – Get card details",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/cards/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "GET /cards/:id/download – Download card as PDF",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/cards/1/download",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "GET /cards/member/:memberId – Get all cards for a member",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/cards/member/202204203",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }]
+          }
+        },
+        {
+          "name": "POST /cards – Generate membership card",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/cards",
+            "header": [
+              { "key": "Content-Type",  "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": \"202204203\",\n  \"firstName\": \"Marang\",\n  \"lastName\": \"Ponatshego\",\n  \"membershipId\": 1\n}"
+            }
+          }
+        },
+        {
+          "name": "DELETE /cards/:id – Delete card (admin)",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/cards/1",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Reports (admin only)",
+      "item": [
+        {
+          "name": "GET /reports/members – Member summary report",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/reports/members",
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "GET /reports/bookings – Booking statistics report",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/bookings?from=2026-01-01&to=2026-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "bookings"],
+              "query": [
+                { "key": "from", "value": "2026-01-01" },
+                { "key": "to",   "value": "2026-12-31" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "GET /reports/payments – Revenue report",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/payments?from=2026-01-01&to=2026-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "payments"],
+              "query": [
+                { "key": "from", "value": "2026-01-01" },
+                { "key": "to",   "value": "2026-12-31" }
+              ]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        },
+        {
+          "name": "GET /reports/expiring-memberships – Expiring within 60 days",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/expiring-memberships?days=60",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports", "expiring-memberships"],
+              "query": [{ "key": "days", "value": "60" }]
+            },
+            "header": [{ "key": "Authorization", "value": "Bearer {{adminToken}}" }]
+          }
+        }
+      ]
+    }
+  ]
+}
