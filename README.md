@@ -9,12 +9,14 @@
 student-club-portal/
 ├── server.js                          # Entry point
 ├── .env.example                       # Environment variable template
+├── keycloak.json                      # Keycloak client config
 ├── package.json
 ├── db/
 │   ├── oracle.js                      # Oracle connection pool
 │   └── schema.sql                     # Run this in Oracle first
 ├── middleware/
-│   └── index.js                       # Auth, validation, error handling
+│   ├── index.js                       # Auth, validation, error handling
+│   └── keycloak.js                    # Keycloak session and adapter setup
 ├── routes/
 │   └── index.js                       # All API routes
 ├── services/
@@ -48,6 +50,11 @@ npm install
 cp .env.example .env
 # Edit .env with your Oracle, Stripe, SMTP credentials
 ```
+
+### 2.1 Configure Keycloak
+- Confirm `keycloak.json` exists in the project root.
+- Update `auth-server-url`, `realm`, and client settings if your Keycloak instance differs.
+- Set `SESSION_SECRET` in `.env` for secure session handling.
 
 ### 3. Set up the Oracle database
 ```sql
@@ -115,6 +122,7 @@ Import `StudentClubPortal.postman_collection.json` into Postman and set the `bas
 
 | External Service | Used For |
 |-----------------|----------|
+| **Keycloak** | Protecting API routes with access tokens, role-based access control, and session handling |
 | **SARMS API** | Student validation during registration |
 | **Stripe** | Payment processing + webhook confirmation |
 | **Nodemailer (SMTP)** | All email notifications (verification, OTP, booking reminders, etc.) |
@@ -123,8 +131,10 @@ Import `StudentClubPortal.postman_collection.json` into Postman and set the `bas
 ---
 
 ## Security Features
-- JWT authentication on all protected routes
-- Role-based access control (student vs admin)
+- Keycloak access token validation on protected routes
+- Role-based access control (student vs admin) using Keycloak role mappings
+- `express-session` + Keycloak middleware for authentication context
+- JWT authentication fallback on legacy tokens where supported
 - Bcrypt password hashing (12 salt rounds)
 - Input validation on all POST endpoints via `express-validator`
 - Stripe webhook signature verification
