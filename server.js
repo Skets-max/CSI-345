@@ -9,6 +9,7 @@ const rateLimit = require('express-rate-limit');
 const { initPool } = require('./db/oracle');
 const routes = require('./routes');
 const { errorHandler } = require('./middleware');
+const { session, memoryStore, keycloak } = require('./middleware/keycloak');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -32,6 +33,14 @@ app.set('json replacer', (() => {
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'change-me-please',
+  resave: false,
+  saveUninitialized: false,
+  store: memoryStore,
+  cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
+app.use(keycloak.middleware());
 
 // ─── Rate Limiting ────────────────────────────────────────────────────────────
 const globalLimiter = rateLimit({

@@ -15,12 +15,33 @@ function validate(req, res, next) {
   next();
 }
 
-// ─── JWT Authentication ───────────────────────────────────────────────────────
+// ─── Keycloak / JWT Authentication ─────────────────────────────────────────────
+function extractRoles(tokenContent) {
+  const realmRoles = tokenContent.realm_access?.roles || [];
+  const clientRoles = tokenContent.resource_access?.['student-club-portal']?.roles || [];
+  return Array.from(new Set([...(realmRoles || []), ...(clientRoles || [])]));
+}
+
 function authenticate(req, res, next) {
+  if (req.kauth?.grant?.access_token?.content) {
+    const token = req.kauth.grant.access_token.content;
+    const roles = extractRoles(token);
+    req.user = {
+      studentId: token.preferred_username || token.sub,
+      email: token.email,
+      firstName: token.given_name,
+      lastName: token.family_name,
+      roles,
+      role: roles.includes('admin') ? 'admin' : 'student'
+    };
+    return next();
+  }
+
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'UNAUTHORIZED', message: 'Bearer token required.' });
   }
+
   const token = authHeader.split(' ')[1];
   try {
     req.user = jwt.verify(token, process.env.JWT_SECRET);
@@ -32,7 +53,8 @@ function authenticate(req, res, next) {
 
 // ─── Admin Role Guard ─────────────────────────────────────────────────────────
 function requireAdmin(req, res, next) {
-  if (req.user.role !== 'admin') {
+  const isAdmin = req.user?.role === 'admin' || req.user?.roles?.includes('admin');
+  if (!isAdmin) {
     return res.status(403).json({ error: 'FORBIDDEN', message: 'Admin access required.' });
   }
   next();

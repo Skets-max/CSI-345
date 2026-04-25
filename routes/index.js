@@ -1,7 +1,8 @@
 // routes/index.js – All API route definitions
 const express = require('express');
 const { body, param, query } = require('express-validator');
-const { validate, authenticate, requireAdmin, requireActiveMembership } = require('../middleware');
+const { validate, requireAdmin, requireActiveMembership } = require('../middleware');
+const { keycloak } = require('../middleware/keycloak');
 
 const authService         = require('../services/auth/authService');
 const registrationService = require('../services/registration/registrationService');
@@ -14,6 +15,7 @@ const reportsService      = require('../services/reports/reportsService');
 const renewalService      = require('../services/renewal/renewalService');
 
 const router = express.Router();
+const authenticate = keycloak.protect();
 
 // ════════════════════════════════════════════════════════════════════════════
 // 0. AUTHENTICATION
